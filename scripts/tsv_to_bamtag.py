@@ -23,8 +23,8 @@ def attach_tags(bam_file, tsv_file, out_file):
                 hash[query_name]['ml_list'].append(ml)
             except:
                 hash[query_name] = {'pos_list': [pos], 'ml_list': [ml]}
-    bam = pysam.AlignmentFile(bam_file, check_sq = False, threads=8)
-    out = pysam.AlignmentFile(out_file, "wb", check_sq = False, template=bam, threads=8)
+    bam = pysam.AlignmentFile(bam_file, )
+    out = pysam.AlignmentFile(out_file, "wb", template=bam)
     for read in bam.fetch():
         query_name = read.query_name
         if query_name in hash:
