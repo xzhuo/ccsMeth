@@ -1,6 +1,7 @@
 import os
 import argparse
 import pysam
+import array
 
 def mm_generator(seq, pos_list):
     mm_list = ["C+m"]
@@ -16,7 +17,7 @@ def attach_tags(bam_file, tsv_file, out_file):
             words = line.strip().split("\t")
             query_name = str(words[3]) + "/" + str(words[0])
             pos = int(words[1])
-            ml = round(float(words[6]) * 256)
+            ml = int(float(words[6]) * 256)
             try:
                 hash[query_name]['pos_list'].append(pos)
                 hash[query_name]['ml_list'].append(ml)
@@ -32,7 +33,7 @@ def attach_tags(bam_file, tsv_file, out_file):
            # ml_tag = ','.join(hash[query_name]['ml_list'])
             mm_tag = ','.join(mm_list)
             read.set_tag('Mm', mm_tag, 'Z')
-            read.set_tag('Ml', hash[query_name]['ml_list'])
+            read.set_tag('Ml', array.array('B', hash[query_name]['ml_list']))
         out.write(read)
 
     out.close()
