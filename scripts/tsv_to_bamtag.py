@@ -31,7 +31,7 @@ def attach_tags(bam_file, tsv_file, out_file):
             seq = read.query_sequence
             mm_list = mm_generator(seq, hash[query_name]['pos_list'])
            # ml_tag = ','.join(hash[query_name]['ml_list'])
-            mm_tag = ','.join(mm_list)
+            mm_tag = ','.join(mm_list) + ";"
             read.set_tag('Mm', mm_tag, 'Z')
             read.set_tag('Ml', array.array('B', hash[query_name]['ml_list']))
         out.write(read)
