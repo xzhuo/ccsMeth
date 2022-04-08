@@ -8,12 +8,15 @@ from subprocess import Popen, PIPE
 import multiprocessing as mp
 from multiprocessing import Queue
 import re
+import random
 # from collections import Counter
 
 from utils.process_utils import display_args
 from utils.process_utils import codecv1_to_frame
 from utils.process_utils import generate_samtools_view_cmd
+from utils.process_utils import get_refloc_of_methysite_in_motif
 from utils.process_utils import get_motif_seqs
+from utils.process_utils import complement_seq
 
 code2frames = codecv1_to_frame()
 queen_size_border = 1000
@@ -92,21 +95,21 @@ def _ccs_words_to_feature(words, args):
         len_seq = len(seq)
         for regex in motifs:
             for match in re.finditer(regex, seq):
-                if match.start() < half_width or len_seq - match.start() < half_width + 1:
+                if match.start() < half_width or len_seq - match.start() < half_width + 2:
                     continue
                 cg_index = match.start()
                 kmer_start = cg_index - half_width
-                kmer_end = kmer_start + kmer_width
+                kmer_end = kmer_start + kmer_width + 1
                 kmer = seq[kmer_start:kmer_end]
                 pos_kmer = kmer[:-1]
                 neg_kmer = revcom(kmer[1:])
-                repeatfn = str(fn) * kmer_width
-                repeatrn = str(rn) * kmer_width
-                repeatstd = "0" * kmer_width
+                repeatfn = [str(fn)] * kmer_width
+                repeatrn = [str(rn)] * kmer_width
+                # repeatstd = ["0"] * kmer_width
 
                 kmer_feature = (ccs, cg_index, "+", holeid, max(fn, rn), 
-                                pos_kmer, list(repeatfn), fi[kmer_start:kmer_end], list(repeatstd), fp[kmer_start:kmer_end], list(repeatstd), "-", "-", 
-                                neg_kmer, list(repeatrn), ri[kmer_start:kmer_end], list(repeatstd), rp[kmer_start:kmer_end], list(repeatstd), "-", "-",
+                                pos_kmer, repeatfn, fi[kmer_start:kmer_end-1], repeatfn, fp[kmer_start:kmer_end-1], repeatfn, "-", "-", 
+                                neg_kmer, repeatrn, ri[kmer_end-1:kmer_start:-1], repeatrn, rp[kmer_end-1:kmer_start:-1], repeatrn, "-", "-",
                                 args.methy_label)
                 feature_str = _features_to_str_combedfeatures(kmer_feature)
                 feature_strs.append(feature_str)
