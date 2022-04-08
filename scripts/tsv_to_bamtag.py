@@ -1,0 +1,66 @@
+import os
+import argparse
+import pysam
+
+def mm_generator(seq, pos_list):
+    mm_list = []
+    for i, end in enumerate(pos_list):
+        start = pos_list[i-1] if i > 0 else 0
+        print(seq[start:end])
+        mm_list.append(seq[start:end].upper().count('C'))
+
+def attach_tags(bam_file, tsv_file, out_file):
+    hash = {}
+    with open(tsv_file, "r") as rf:
+        for line in rf:
+            words = line.strip().split("\t")
+            query_name = str(words[3]) + "/" + str(words[0])
+            pos = int(words[1])
+            ml = round(words[6] * 256)
+            try:
+                hash[query_name]['pos_list'].append(pos)
+                hash[query_name]['ml_list'].append(ml)
+            except:
+                hash[query_name] = {'pos_list': [pos], 'ml_list': [ml]}
+
+    bam = pysam.AlignmentFile(bam_file, threads=8)
+    out = pysam.AlignmentFile(out_file, "wb", template=bam, threads=8)
+    for read in bam.fetch():
+        query_name = read.query_name
+        if query_name in hash:
+            seq = read.query_sequence
+            mm_list = mm_generator(seq, hash[query_name]['pos_list'])
+            mm_list 
+            ml_tag = ','.join(hash[query_name]['ml_list'])
+            mm_tag = ','.join(mm_list)
+            read.set_tag('Mm', mm_tag, 'Z')
+            read.set_tag('Ml', ml_tag, 'B')
+        out.write(read)
+
+    out.close()
+    bam.close()
+
+def main():
+    parser = argparse.ArgumentParser(description='attach methylation results from tsv to Mm and Ml tags in the bam file')
+    parser.add_argument('-b', '--bam', type=str, required=True,
+                        help='input bam file')
+    parser.add_argument('-t', '--tsv', type=str, required=True,
+                        help='ccsmeth result tsv file')
+    parser.add_argument('-o', '--out', type=str, required=True,
+                        help='output bam file with Ml and Mm tags attached')
+
+    args = parser.parse_args()
+    tsv_file = os.path.abspath(args.tsv)
+    bam_file = os.path.abspath(args.bam)
+    if not os.path.exists(tsv_file):
+        raise ValueError("--tsv file does not exist!")
+    if not os.path.exists(bam_file):
+        raise ValueError("--bam file does not exist!")
+    # bamfile = args.bam
+    # tsvfile = args.tsv
+    outfile = args.out
+    attach_tags(bam_file, tsv_file, outfile)
+
+
+if __name__ == '__main__':
+    main()
