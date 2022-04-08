@@ -3,11 +3,11 @@ import argparse
 import pysam
 
 def mm_generator(seq, pos_list):
-    mm_list = []
+    mm_list = ["C+m"]
     for i, end in enumerate(pos_list):
-        start = pos_list[i-1] if i > 0 else 0
-        print(seq[start:end])
-        mm_list.append(seq[start:end].upper().count('C'))
+        start = pos_list[i-1] + 2 if i > 0 else 0
+        mm_list.append(str(seq[start:end].upper().count('C')))
+    return mm_list
 
 def attach_tags(bam_file, tsv_file, out_file):
     hash = {}
@@ -16,25 +16,23 @@ def attach_tags(bam_file, tsv_file, out_file):
             words = line.strip().split("\t")
             query_name = str(words[3]) + "/" + str(words[0])
             pos = int(words[1])
-            ml = round(words[6] * 256)
+            ml = round(float(words[6]) * 256)
             try:
                 hash[query_name]['pos_list'].append(pos)
                 hash[query_name]['ml_list'].append(ml)
             except:
                 hash[query_name] = {'pos_list': [pos], 'ml_list': [ml]}
-
-    bam = pysam.AlignmentFile(bam_file, threads=8)
-    out = pysam.AlignmentFile(out_file, "wb", template=bam, threads=8)
+    bam = pysam.AlignmentFile(bam_file, check_sq = False, threads=8)
+    out = pysam.AlignmentFile(out_file, "wb", check_sq = False, template=bam, threads=8)
     for read in bam.fetch():
         query_name = read.query_name
         if query_name in hash:
             seq = read.query_sequence
             mm_list = mm_generator(seq, hash[query_name]['pos_list'])
-            mm_list 
-            ml_tag = ','.join(hash[query_name]['ml_list'])
+           # ml_tag = ','.join(hash[query_name]['ml_list'])
             mm_tag = ','.join(mm_list)
             read.set_tag('Mm', mm_tag, 'Z')
-            read.set_tag('Ml', ml_tag, 'B')
+            read.set_tag('Ml', hash[query_name]['ml_list'])
         out.write(read)
 
     out.close()
