@@ -66,7 +66,7 @@ def _ccs_words_to_feature(words, args):
     holeid = lib + "/" + id
     fi, fp, ri, rp = [], [], [], []
     feature_strs = []
-    seq = revcom(seq) if int(flag) & 0X10 else seq
+    seq = revcom(seq) if flag.isnumeric() and int(flag) & 0X10 else seq
 
     try:
         fi = [int(x) for x in tags_dict['fi'].split(",")[1:]]
