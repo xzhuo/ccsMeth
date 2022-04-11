@@ -60,12 +60,13 @@ def _get_holeid(subread_id):
 
 
 def _ccs_words_to_feature(words, args):
-    query, seq, tags = [words[i] for i in (0, 9, 11)]
+    query, flag, seq, tags = [words[i] for i in (0, 1, 9, 11)]
     tags_dict = dict(re.split(':\S:', x) for x in tags.split("\t"))
     lib, id, ccs = query.split("/")
     holeid = lib + "/" + id
     fi, fp, ri, rp = [], [], [], []
     feature_strs = []
+    seq = revcom(seq) if flag & 0X10 else seq
 
     try:
         fi = [int(x) for x in tags_dict['fi'].split(",")[1:]]
