@@ -3,6 +3,10 @@ import argparse
 import pysam
 import array
 
+def revcom(seq):
+    tab = str.maketrans("ACGT", "TGCA")
+    return seq.translate(tab)[::-1]
+
 def mm_generator(seq, pos_list):
     mm_list = ["C+m"]
     for i, end in enumerate(pos_list):
@@ -28,7 +32,8 @@ def attach_tags(bam_file, tsv_file, out_file):
     for read in bam.fetch():
         query_name = read.query_name
         if query_name in hash:
-            seq = read.query_sequence
+            seq = revcom(read.query_sequence) if read.flag & 0X10 else read.query_sequence
+            # seq = read.query_sequence
             mm_list = mm_generator(seq, hash[query_name]['pos_list'])
            # ml_tag = ','.join(hash[query_name]['ml_list'])
             mm_tag = ','.join(mm_list) + ";"
