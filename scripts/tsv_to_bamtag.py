@@ -23,8 +23,9 @@ def attach_tags(bam_file, tsv_file, out_file):
             pos = int(words[1])
             ml = int(float(words[6]) * 256)
             try:
-                hash[query_name]['pos_list'].append(pos)
-                hash[query_name]['ml_list'].append(ml)
+                if pos > hash[query_name]['pos_list'][-1]:
+                    hash[query_name]['pos_list'].append(pos)
+                    hash[query_name]['ml_list'].append(ml)
             except:
                 hash[query_name] = {'pos_list': [pos], 'ml_list': [ml]}
     bam = pysam.AlignmentFile(bam_file, threads = 8)
